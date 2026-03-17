@@ -9,6 +9,7 @@ import {
   Clock,
   Star
 } from 'lucide-react';
+import './Dashboard.css';
 
 const Dashboard: React.FC = () => {
   const stats = [
@@ -32,44 +33,36 @@ const Dashboard: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
+    <div className="dashboard-page">
+      <div className="dashboard-header">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Welcome back!</h1>
-          <p className="text-gray-600 mt-1">Here's your career progress overview</p>
+          <h1 className="dashboard-title">Welcome back!</h1>
+          <p className="dashboard-subtitle">Here's your career progress overview</p>
         </div>
         <div className="flex items-center space-x-3">
           <div className="text-right">
-            <p className="text-sm text-gray-500">Current Streak</p>
-            <p className="text-2xl font-bold text-orange-600">🔥 7 days</p>
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Current Streak</p>
+            <p className="text-2xl font-bold" style={{ color: 'var(--accent)' }}>🔥 7 days</p>
           </div>
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="stats-grid">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
-          const colorClasses = {
-            blue: 'bg-blue-500 text-blue-500',
-            green: 'bg-green-500 text-green-500',
-            purple: 'bg-purple-500 text-purple-500',
-            orange: 'bg-orange-500 text-orange-500',
-          };
           
           return (
-            <div key={index} className="bg-white/70 backdrop-blur-sm rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-all">
+            <div key={index} className="tucf-card">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-600 text-sm font-medium">{stat.label}</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
-                  <p className={`text-sm font-medium mt-1 ${colorClasses[stat.color as keyof typeof colorClasses]}`}>
+                  <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>{stat.label}</p>
+                  <p className="text-2xl font-bold mt-1" style={{ color: 'var(--text-primary)' }}>{stat.value}</p>
+                  <p className="text-sm font-medium mt-1" style={{ color: 'var(--accent)' }}>
                     {stat.change} from last week
                   </p>
                 </div>
-                <div className={`p-3 rounded-lg ${colorClasses[stat.color as keyof typeof colorClasses]} bg-opacity-20`}>
-                  <Icon className={`h-6 w-6 ${colorClasses[stat.color as keyof typeof colorClasses]}`} />
+                <div className="p-3 rounded-lg" style={{ background: 'rgba(255, 122, 0, 0.14)' }}>
+                  <Icon className="h-6 w-6" style={{ color: 'var(--accent)' }} />
                 </div>
               </div>
             </div>
@@ -77,26 +70,25 @@ const Dashboard: React.FC = () => {
         })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Jobs */}
-        <div className="lg:col-span-2 bg-white/70 backdrop-blur-sm rounded-xl p-6 border border-gray-200">
+      <div className="content-grid">
+        <div className="content-wide tucf-card">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">Recent Job Matches</h2>
-            <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">View all</button>
+            <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>Recent Job Matches</h2>
+            <button className="text-sm font-medium" style={{ color: 'var(--accent)' }}>View all</button>
           </div>
           <div className="space-y-4">
             {recentJobs.map((job, index) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-lg hover:bg-gray-100/50 transition-colors">
+              <div key={index} className="flex items-center justify-between p-4 rounded-lg transition-colors" style={{ background: '#0f0f0f', border: '1px solid var(--border)' }}>
                 <div className="flex-1">
                   <div className="flex items-center space-x-2">
-                    <h3 className="font-medium text-gray-900">{job.title}</h3>
-                    {job.saved && <Star className="h-4 w-4 text-yellow-500 fill-current" />}
+                    <h3 className="font-medium" style={{ color: 'var(--text-primary)' }}>{job.title}</h3>
+                    {job.saved && <Star className="h-4 w-4 fill-current" style={{ color: 'var(--accent)' }} />}
                   </div>
-                  <p className="text-gray-600 text-sm">{job.company} • {job.location}</p>
-                  <p className="text-gray-500 text-xs mt-1">{job.posted}</p>
+                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{job.company} • {job.location}</p>
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>{job.posted}</p>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <button className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors">
+                  <button className="px-3 py-1 text-sm tucf-btn-primary">
                     Apply
                   </button>
                 </div>
@@ -105,51 +97,52 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Today's Tasks */}
-        <div className="bg-white/70 backdrop-blur-sm rounded-xl p-6 border border-gray-200">
+        <div className="tucf-card">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">Today's Tasks</h2>
-            <Calendar className="h-5 w-5 text-gray-400" />
+            <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>Today's Tasks</h2>
+            <Calendar className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
           </div>
           <div className="space-y-3">
             {todayTasks.map((item, index) => (
               <div key={index} className="flex items-center space-x-3">
                 <button className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
                   item.completed
-                    ? 'bg-green-500 border-green-500'
-                    : 'border-gray-300 hover:border-blue-500'
+                    ? 'bg-orange-500 border-orange-500'
+                    : 'border-[#2f2f2f] hover:border-orange-500'
                 }`}>
                   {item.completed && <CheckCircle className="h-3 w-3 text-white" />}
                 </button>
-                <span className={`text-sm ${item.completed ? 'text-gray-500 line-through' : 'text-gray-700'}`}>
+                <span
+                  className={`text-sm ${item.completed ? 'line-through' : ''}`}
+                  style={{ color: item.completed ? '#6b7280' : 'var(--text-secondary)' }}
+                >
                   {item.task}
                 </span>
               </div>
             ))}
           </div>
-          <button className="w-full mt-4 py-2 text-blue-600 hover:bg-blue-50 rounded-md text-sm font-medium transition-colors">
+          <button className="w-full mt-4 py-2 rounded-md text-sm font-medium transition-colors" style={{ color: 'var(--accent)', border: '1px solid var(--border)', background: 'rgba(255,122,0,0.08)' }}>
             Add New Task
           </button>
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 text-white">
+      <div className="tucf-card">
         <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <button className="bg-white/20 backdrop-blur-sm rounded-lg p-4 hover:bg-white/30 transition-colors">
+        <div className="quick-grid">
+          <button className="rounded-lg p-4 transition-colors" style={{ background: 'rgba(255,122,0,0.12)' }}>
             <Briefcase className="h-6 w-6 mb-2" />
             <p className="text-sm font-medium">Find Jobs</p>
           </button>
-          <button className="bg-white/20 backdrop-blur-sm rounded-lg p-4 hover:bg-white/30 transition-colors">
+          <button className="rounded-lg p-4 transition-colors" style={{ background: 'rgba(255,122,0,0.12)' }}>
             <FileText className="h-6 w-6 mb-2" />
             <p className="text-sm font-medium">Check ATS Score</p>
           </button>
-          <button className="bg-white/20 backdrop-blur-sm rounded-lg p-4 hover:bg-white/30 transition-colors">
+          <button className="rounded-lg p-4 transition-colors" style={{ background: 'rgba(255,122,0,0.12)' }}>
             <Globe className="h-6 w-6 mb-2" />
             <p className="text-sm font-medium">Update Portfolio</p>
           </button>
-          <button className="bg-white/20 backdrop-blur-sm rounded-lg p-4 hover:bg-white/30 transition-colors">
+          <button className="rounded-lg p-4 transition-colors" style={{ background: 'rgba(255,122,0,0.12)' }}>
             <TrendingUp className="h-6 w-6 mb-2" />
             <p className="text-sm font-medium">View Progress</p>
           </button>

@@ -29,28 +29,25 @@ const Login: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        {/* Header */}
         <div className="text-center">
           <div className="flex items-center justify-center space-x-2 mb-6">
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent)' }}>
               <span className="text-white font-bold text-lg">CP</span>
             </div>
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">Welcome back</h2>
-          <p className="text-gray-600 mt-2">Sign in to your CareerPro account</p>
+          <h2 className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>Welcome back</h2>
+          <p className="mt-2" style={{ color: 'var(--text-secondary)' }}>Sign in to your CareerPro account</p>
         </div>
 
-        {/* Form */}
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-8 space-y-6 tucf-card" onSubmit={handleSubmit}>
           <div className="space-y-4">
-            {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                 Email Address
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
+                  <Mail className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
                 </div>
                 <input
                   id="email"
@@ -58,20 +55,19 @@ const Login: React.FC = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="block w-full pl-10 pr-3 py-3"
                   placeholder="Enter your email"
                 />
               </div>
             </div>
 
-            {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                 Password
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
+                  <Lock className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
                 </div>
                 <input
                   id="password"
@@ -79,7 +75,7 @@ const Login: React.FC = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="block w-full pl-10 pr-10 py-3"
                   placeholder="Enter your password"
                 />
                 <button
@@ -88,9 +84,9 @@ const Login: React.FC = () => {
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400" />
+                    <EyeOff className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
                   ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
+                    <Eye className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
                   )}
                 </button>
               </div>
@@ -98,35 +94,33 @@ const Login: React.FC = () => {
           </div>
 
           {error && (
-            <div className="text-red-600 text-sm text-center">{error}</div>
+            <div className="text-sm text-center" style={{ color: 'var(--accent)' }}>{error}</div>
           )}
 
-          {/* Remember & Forgot */}
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <input
                 id="remember-me"
                 name="remember-me"
                 type="checkbox"
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="h-4 w-4 rounded"
               />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+              <label htmlFor="remember-me" className="ml-2 block text-sm" style={{ color: 'var(--text-primary)' }}>
                 Remember me
               </label>
             </div>
 
             <div className="text-sm">
-              <button type="button" className="font-medium text-blue-600 hover:text-blue-500">
+              <button type="button" className="font-medium" style={{ color: 'var(--accent)' }}>
                 Forgot password?
               </button>
             </div>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={isLoading}
-            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="group relative w-full flex justify-center py-3 px-4 text-sm font-medium rounded-lg text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all tucf-btn-primary"
           >
             {isLoading ? (
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
@@ -138,13 +132,13 @@ const Login: React.FC = () => {
             )}
           </button>
 
-          {/* Sign up link */}
           <div className="text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
               Don't have an account?{' '}
               <Link
                 to="/register"
-                className="font-medium text-blue-600 hover:text-blue-500"
+                className="font-medium"
+                style={{ color: 'var(--accent)' }}
               >
                 Sign up now
               </Link>
@@ -152,9 +146,8 @@ const Login: React.FC = () => {
           </div>
         </form>
 
-        {/* Demo Account */}
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-          <p className="text-sm text-blue-800 text-center">
+        <div className="mt-6 p-4 rounded-lg" style={{ background: 'rgba(255,122,0,0.12)', border: '1px solid rgba(255,122,0,0.2)' }}>
+          <p className="text-sm text-center" style={{ color: 'var(--accent)' }}>
             <strong>Demo Account:</strong> Use any email and password to sign in
           </p>
         </div>
