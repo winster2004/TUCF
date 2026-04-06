@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Milestone } from 'lucide-react';
 import { getGroqApiKey } from '../lib/groq';
+import { safeParseJSON as parseSafeJSON } from '../lib/safeJson';
 
 type RoadmapLevel = 'Beginner' | 'Intermediate' | 'Advanced';
 
@@ -31,85 +32,75 @@ interface RoadmapResponse {
 const ROADMAP_PROGRESS_STORAGE_KEY = 'roadmap_generator_progress';
 const ROADMAP_MODEL = 'llama-3.3-70b-versatile';
 
-function safeParseJSON<T>(raw: string): T | null {
+function parseRoadmapResponse<T>(raw: string): T | null {
   if (!raw || raw.trim() === '') return null;
 
-  try {
-    let cleaned = raw.trim();
-    cleaned = cleaned.replace(/^```json\s*/i, '');
-    cleaned = cleaned.replace(/^```\s*/i, '');
-    cleaned = cleaned.replace(/```\s*$/i, '');
-    cleaned = cleaned.trim();
-    cleaned = cleaned.replace(/,\s*([}\]])/g, '$1');
-    return JSON.parse(cleaned) as T;
-  } catch (e1) {
-    console.warn('Direct parse failed, trying recovery...', e1 instanceof Error ? e1.message : e1);
+  let cleaned = raw.trim();
+  cleaned = cleaned.replace(/^```json\s*/i, '');
+  cleaned = cleaned.replace(/^```\s*/i, '');
+  cleaned = cleaned.replace(/```\s*$/i, '');
+  cleaned = cleaned.trim();
+  cleaned = cleaned.replace(/,\s*([}\]])/g, '$1');
 
-    try {
-      let cleaned = raw.trim();
-      cleaned = cleaned.replace(/^```json\s*/i, '');
-      cleaned = cleaned.replace(/^```\s*/i, '');
-      cleaned = cleaned.replace(/```\s*$/i, '');
-      cleaned = cleaned.trim();
-      cleaned = cleaned.replace(/,\s*([}\]])/g, '$1');
+  const direct = parseSafeJSON<T>(cleaned, 'roadmap.direct');
+  if (direct) {
+    return direct;
+  }
 
-      if (cleaned.trimStart().startsWith('[')) {
-        const lastComplete = cleaned.lastIndexOf('},');
-        const lastSingle = cleaned.lastIndexOf('}');
-        const cutPoint = Math.max(lastComplete, lastSingle);
-        if (cutPoint > 0) {
-          let recovered = cleaned.substring(0, cutPoint + 1);
-          recovered = recovered.replace(/,\s*$/, '');
-          recovered += ']';
-          recovered = recovered.replace(/,\s*([}\]])/g, '$1');
-          return JSON.parse(recovered) as T;
-        }
-      }
+  console.warn('Direct parse failed, trying recovery...');
 
-      if (cleaned.trimStart().startsWith('{')) {
-        let braces = 0;
-        let lastSafePos = 0;
-        let inString = false;
-        let escape = false;
-
-        for (let i = 0; i < cleaned.length; i += 1) {
-          const c = cleaned[i];
-          if (escape) {
-            escape = false;
-            continue;
-          }
-          if (c === '\\' && inString) {
-            escape = true;
-            continue;
-          }
-          if (c === '"') {
-            inString = !inString;
-            continue;
-          }
-          if (inString) {
-            continue;
-          }
-          if (c === '{') braces += 1;
-          if (c === '}') {
-            braces -= 1;
-            if (braces === 0) lastSafePos = i;
-          }
-        }
-
-        if (lastSafePos > 0) {
-          let recovered = cleaned.substring(0, lastSafePos + 1);
-          recovered = recovered.replace(/,\s*([}\]])/g, '$1');
-          return JSON.parse(recovered) as T;
-        }
-      }
-
-      return null;
-    } catch (e2) {
-      console.error('Recovery also failed:', e2 instanceof Error ? e2.message : e2);
-      console.error('Raw response length:', raw.length);
-      return null;
+  if (cleaned.trimStart().startsWith('[')) {
+    const lastComplete = cleaned.lastIndexOf('},');
+    const lastSingle = cleaned.lastIndexOf('}');
+    const cutPoint = Math.max(lastComplete, lastSingle);
+    if (cutPoint > 0) {
+      let recovered = cleaned.substring(0, cutPoint + 1);
+      recovered = recovered.replace(/,\s*$/, '');
+      recovered += ']';
+      recovered = recovered.replace(/,\s*([}\]])/g, '$1');
+      return parseSafeJSON<T>(recovered, 'roadmap.recover-array');
     }
   }
+
+  if (cleaned.trimStart().startsWith('{')) {
+    let braces = 0;
+    let lastSafePos = 0;
+    let inString = false;
+    let escape = false;
+
+    for (let i = 0; i < cleaned.length; i += 1) {
+      const c = cleaned[i];
+      if (escape) {
+        escape = false;
+        continue;
+      }
+      if (c === '\\' && inString) {
+        escape = true;
+        continue;
+      }
+      if (c === '"') {
+        inString = !inString;
+        continue;
+      }
+      if (inString) {
+        continue;
+      }
+      if (c === '{') braces += 1;
+      if (c === '}') {
+        braces -= 1;
+        if (braces === 0) lastSafePos = i;
+      }
+    }
+
+    if (lastSafePos > 0) {
+      let recovered = cleaned.substring(0, lastSafePos + 1);
+      recovered = recovered.replace(/,\s*([}\]])/g, '$1');
+      return parseSafeJSON<T>(recovered, 'roadmap.recover-object');
+    }
+  }
+
+  console.error('Recovery also failed. Raw response length:', raw.length);
+  return null;
 }
 
 async function callGroqAPI(prompt: string, maxTokens: number) {
@@ -145,7 +136,7 @@ async function generateWithRetry(prompt: string, maxRetries = 1) {
   for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
     try {
       const response = await callGroqAPI(nextPrompt, 4096);
-      const parsed = safeParseJSON<RoadmapResponse>(response);
+      const parsed = parseRoadmapResponse<RoadmapResponse>(response);
       if (parsed) {
         return parsed;
       }
@@ -192,9 +183,10 @@ const RoadmapGenerator: React.FC = () => {
   useEffect(() => {
     const stored = localStorage.getItem(ROADMAP_PROGRESS_STORAGE_KEY);
     if (stored) {
-      try {
-        setProgress(JSON.parse(stored));
-      } catch {
+      const parsed = parseSafeJSON<Record<string, boolean>>(stored, 'roadmap.progress');
+      if (parsed && typeof parsed === 'object') {
+        setProgress(parsed);
+      } else {
         setProgress({});
       }
     }
@@ -223,6 +215,7 @@ const RoadmapGenerator: React.FC = () => {
       const prompt = [
         'IMPORTANT: Return ONLY a raw valid JSON object. No markdown. No backticks.',
         'No explanation. No trailing commas. Strictly valid JSON only.',
+        'Escape all newlines and control characters properly inside JSON string values.',
         'Response MUST be complete - do not cut off.',
         '',
         `Create a concise learning roadmap for a ${level} wanting to become a ${role}.`,

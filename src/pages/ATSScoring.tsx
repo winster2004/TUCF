@@ -1,16 +1,28 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   CheckCircle,
+  Download,
   FileText,
   Target,
   TrendingUp,
   Upload,
 } from 'lucide-react';
 import { scoreResume, type ATSAnalysis } from '../lib/api';
+import { useAuth } from '../contexts/AuthContext';
+import {
+  buildATSMetrics,
+  downloadStoredResume,
+  fileToDataUrl,
+  readDashboardData,
+  updateDashboardData,
+  type StoredResumeFile,
+} from '../lib/dashboardStore';
 
 const ATSScoring: React.FC = () => {
+  const { user } = useAuth();
   const [resume, setResume] = useState<File | null>(null);
+  const [storedResume, setStoredResume] = useState<StoredResumeFile | null>(null);
   const [jobDescription, setJobDescription] = useState('');
   const [analysisResult, setAnalysisResult] = useState<ATSAnalysis | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -21,15 +33,52 @@ const ATSScoring: React.FC = () => {
     [analysisResult],
   );
 
-  const handleResumeUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    const storedData = readDashboardData({ id: user.id, email: user.email });
+    setStoredResume(storedData.resume);
+    setAnalysisResult(storedData.atsAnalysis);
+  }, [user]);
+
+  const handleResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
+    if (!file || !user) {
+      setResume(file);
+      return;
+    }
+
     setResume(file);
     setAnalysisResult(null);
     setErrorMessage('');
+
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      const nextResume = {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        dataUrl,
+        uploadedAt: new Date().toISOString(),
+      };
+
+      updateDashboardData({ id: user.id, email: user.email }, (current) => ({
+        ...current,
+        resume: nextResume,
+        atsAnalysis: null,
+        atsMetrics: null,
+      }));
+      setStoredResume(nextResume);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not save resume.';
+      setErrorMessage(message);
+    }
   };
 
   const analyzeResume = async () => {
-    if (!resume || !jobDescription.trim()) {
+    if (!resume || !jobDescription.trim() || !user) {
       return;
     }
 
@@ -39,6 +88,11 @@ const ATSScoring: React.FC = () => {
     try {
       const result = await scoreResume(resume, jobDescription.trim());
       setAnalysisResult(result);
+      updateDashboardData({ id: user.id, email: user.email }, (current) => ({
+        ...current,
+        atsAnalysis: result,
+        atsMetrics: buildATSMetrics(result, current.resume?.name || resume.name),
+      }));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not analyze resume.';
       setErrorMessage(message);
@@ -59,9 +113,22 @@ const ATSScoring: React.FC = () => {
       .split(/[_-]/g)
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
       .join(' ');
+  const atsShellStyle = {
+    '--text-primary': '#f9fafb',
+    '--text-secondary': '#9ca3af',
+    '--border': 'rgba(255, 255, 255, 0.1)',
+    '--bg-card': '#000000',
+    '--bg-sidebar': '#000000',
+    '--input-bg': '#000000',
+  } as React.CSSProperties;
+  const atsCardClass =
+    'rounded-xl border border-white/10 bg-black p-4 transition-all duration-300 hover:border-blue-500/25 hover:bg-blue-950/30';
+  const atsCardCenterClass = `${atsCardClass} text-center`;
+  const atsFieldClass =
+    'w-full rounded-xl border border-white/10 bg-black px-3 py-2 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" style={atsShellStyle}>
       <div>
         <h1 className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>
           ATS Resume Score Checker
@@ -74,20 +141,17 @@ const ATSScoring: React.FC = () => {
 
       <div className="grid grid-cols-1 xl:grid-cols-[420px_minmax(0,1fr)] gap-6">
         <div className="space-y-6">
-          <div className="tucf-card">
+          <div className={atsCardClass}>
             <h2 className="text-xl font-semibold mb-4 flex items-center" style={{ color: 'var(--text-primary)' }}>
               <FileText className="h-5 w-5 mr-2" style={{ color: 'var(--accent)' }} />
               Resume Upload
             </h2>
 
-            <div
-              className="border-2 border-dashed rounded-lg p-8 text-center transition-colors"
-              style={{ borderColor: 'var(--border)', background: '#0f0f0f' }}
-            >
+            <div className="rounded-xl border border-white/10 bg-black p-4 text-center transition-all duration-300 hover:border-blue-500/25 hover:bg-blue-950/30">
               {resume ? (
                 <div className="space-y-2">
                   <CheckCircle className="h-12 w-12 mx-auto" style={{ color: 'var(--accent)' }} />
-                  <p className="font-medium break-all" style={{ color: 'var(--accent)' }}>
+                  <p className="font-medium break-words" style={{ color: 'var(--accent)' }}>
                     {resume.name}
                   </p>
                   <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
@@ -96,6 +160,26 @@ const ATSScoring: React.FC = () => {
                   <button onClick={() => setResume(null)} className="text-sm" style={{ color: 'var(--accent)' }}>
                     Remove file
                   </button>
+                </div>
+              ) : storedResume ? (
+                <div className="space-y-2">
+                  <CheckCircle className="h-12 w-12 mx-auto" style={{ color: 'var(--accent)' }} />
+                  <p className="font-medium break-words" style={{ color: 'var(--accent)' }}>
+                    {storedResume.name}
+                  </p>
+                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    Resume saved for this account
+                  </p>
+                  <div className="flex items-center justify-center gap-2">
+                    <button
+                      onClick={() => downloadStoredResume(storedResume)}
+                      className="inline-flex items-center gap-2 text-sm"
+                      style={{ color: 'var(--accent)' }}
+                    >
+                      <Download className="h-4 w-4" />
+                      Download resume
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -111,7 +195,7 @@ const ATSScoring: React.FC = () => {
                   />
                   <label
                     htmlFor="resume-upload"
-                    className="inline-block px-4 py-2 text-white rounded-lg cursor-pointer transition-colors tucf-btn-primary"
+                    className="inline-block rounded-lg px-4 py-2 transition-colors tucf-btn-primary"
                   >
                     Choose PDF
                   </label>
@@ -120,7 +204,7 @@ const ATSScoring: React.FC = () => {
             </div>
           </div>
 
-          <div className="tucf-card">
+          <div className={atsCardClass}>
             <h2 className="text-xl font-semibold mb-4 flex items-center" style={{ color: 'var(--text-primary)' }}>
               <Target className="h-5 w-5 mr-2" style={{ color: 'var(--accent)' }} />
               Job Description
@@ -130,7 +214,7 @@ const ATSScoring: React.FC = () => {
               placeholder="Paste the target job description here..."
               value={jobDescription}
               onChange={(e) => setJobDescription(e.target.value)}
-              className="w-full h-56 px-4 py-3 resize-none"
+              className={`${atsFieldClass} h-56 resize-none`}
             />
 
             {errorMessage && (
@@ -143,7 +227,7 @@ const ATSScoring: React.FC = () => {
               <button
                 onClick={analyzeResume}
                 disabled={!resume || !jobDescription.trim() || isAnalyzing}
-                className="w-full py-3 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium flex items-center justify-center space-x-2 tucf-btn-primary"
+                className="flex w-full items-center justify-center space-x-2 rounded-lg py-3 font-medium transition-all tucf-btn-primary disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isAnalyzing ? (
                   <>
@@ -165,7 +249,7 @@ const ATSScoring: React.FC = () => {
           {analysisResult ? (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                <div className="tucf-card text-center">
+                <div className={atsCardCenterClass}>
                   <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
                     ATS Score
                   </h2>
@@ -180,15 +264,12 @@ const ATSScoring: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="tucf-card">
+                <div className={atsCardClass}>
                   <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
                     Semantic Match
                   </h3>
                   <p className="text-3xl font-bold" style={{ color: 'var(--accent)' }}>
                     {analysisResult.semanticSimilarity.score}%
-                  </p>
-                  <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>
-                    Provider: {analysisResult.semanticSimilarity.provider}
                   </p>
                   {analysisResult.semanticSimilarity.warning && (
                     <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>
@@ -197,7 +278,7 @@ const ATSScoring: React.FC = () => {
                   )}
                 </div>
 
-                <div className="tucf-card">
+                <div className={atsCardClass}>
                   <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
                     Experience Fit
                   </h3>
@@ -212,7 +293,7 @@ const ATSScoring: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="tucf-card">
+                <div className={atsCardClass}>
                   <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
                     Resume Health
                   </h3>
@@ -229,7 +310,7 @@ const ATSScoring: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                <div className="tucf-card">
+                <div className={atsCardClass}>
                   <h3 className="text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
                     Matched Keywords
                   </h3>
@@ -265,7 +346,7 @@ const ATSScoring: React.FC = () => {
                   )}
                 </div>
 
-                <div className="tucf-card">
+                <div className={atsCardClass}>
                   <h3 className="text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
                     Missing Keywords
                   </h3>
@@ -274,8 +355,7 @@ const ATSScoring: React.FC = () => {
                       {analysisResult.missingKeywords.map((keyword) => (
                         <span
                           key={keyword}
-                          className="px-2 py-1 text-sm rounded"
-                          style={{ background: '#1a1a1a', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
+                          className="rounded border border-gray-200 bg-gray-100 px-2 py-1 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
                         >
                           {keyword}
                         </span>
@@ -290,7 +370,7 @@ const ATSScoring: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                <div className="tucf-card">
+                <div className={atsCardClass}>
                   <h3 className="text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
                     Score Breakdown
                   </h3>
@@ -301,7 +381,7 @@ const ATSScoring: React.FC = () => {
                           <span>{formatSectionTitle(key)}</span>
                           <span>{value}%</span>
                         </div>
-                        <div className="h-2 rounded-full" style={{ background: '#181818' }}>
+                        <div className="h-2 rounded-full bg-gray-200 dark:bg-gray-800">
                           <div
                             className="h-2 rounded-full"
                             style={{ width: `${Math.min(Math.max(value, 0), 100)}%`, background: 'var(--accent)' }}
@@ -312,7 +392,7 @@ const ATSScoring: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="tucf-card">
+                <div className={atsCardClass}>
                   <h3 className="text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
                     Skill Gap Analysis
                   </h3>
@@ -327,8 +407,7 @@ const ATSScoring: React.FC = () => {
                             {group.missing.map((skill) => (
                               <span
                                 key={`${group.category}-${skill}`}
-                                className="px-2 py-1 text-sm rounded"
-                                style={{ background: '#1a1a1a', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
+                                className="rounded border border-gray-200 bg-gray-100 px-2 py-1 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
                               >
                                 {skill}
                               </span>
@@ -346,7 +425,7 @@ const ATSScoring: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                <div className="tucf-card">
+                <div className={atsCardClass}>
                   <h3 className="text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
                     Suggestions
                   </h3>
@@ -360,7 +439,7 @@ const ATSScoring: React.FC = () => {
                   </ul>
                 </div>
 
-                <div className="tucf-card">
+                <div className={atsCardClass}>
                   <h3 className="text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
                     Keyword Stuffing Check
                   </h3>
@@ -380,14 +459,14 @@ const ATSScoring: React.FC = () => {
                 </div>
               </div>
 
-              <div className="tucf-card">
+                <div className={atsCardClass}>
                 <h3 className="text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
                   Parsed Resume Sections
                 </h3>
                 {sectionEntries.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {sectionEntries.map(([section, value]) => (
-                      <div key={section} className="rounded-lg border p-4" style={{ borderColor: 'var(--border)', background: '#111111' }}>
+                      <div key={section} className="rounded-lg border border-white/10 bg-black p-4 transition-all duration-300 hover:border-blue-500/25 hover:bg-blue-950/30">
                         <div className="flex items-center justify-between mb-2">
                           <h4 className="font-medium" style={{ color: 'var(--text-primary)' }}>
                             {formatSectionTitle(section)}
@@ -414,7 +493,7 @@ const ATSScoring: React.FC = () => {
               </div>
             </>
           ) : (
-            <div className="tucf-card text-center">
+              <div className={atsCardCenterClass}>
               <Target className="h-16 w-16 mx-auto mb-4" style={{ color: 'var(--text-secondary)' }} />
               <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
                 Ready to Score

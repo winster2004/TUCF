@@ -1,153 +1,774 @@
-import React from 'react';
-import { 
-  Briefcase, 
-  FileText, 
-  Globe, 
-  TrendingUp, 
-  Calendar,
-  CheckCircle,
-  Clock,
-  Star
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Bell,
+  CalendarDays,
+  Download,
+  FilePenLine,
+  FileText,
+  Globe,
+  Map,
+  Pencil,
+  Plus,
+  Search,
+  Sparkles,
+  Target,
+  Trash2,
+  Upload,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import {
+  type CalendarTask,
+  createTaskId,
+  downloadStoredResume,
+  fileToDataUrl,
+  readDashboardData,
+  updateDashboardData,
+  type DashboardTask,
+  type StoredResumeFile,
+  type UserDashboardData,
+} from '../lib/dashboardStore';
+import ThemeToggle from '../components/ThemeToggle';
 import './Dashboard.css';
 
+interface TaskDraft {
+  title: string;
+  description: string;
+  dueDate: string;
+}
+
+interface CalendarDraft {
+  time: string;
+  period: 'AM' | 'PM';
+  task: string;
+}
+
+const emptyDraft: TaskDraft = {
+  title: '',
+  description: '',
+  dueDate: '',
+};
+const emptyCalendarDraft: CalendarDraft = {
+  time: '',
+  period: 'AM',
+  task: '',
+};
+
+const moduleLinks = [
+  {
+    title: 'Roadmaps',
+    description: 'Explore guided career paths',
+    to: '/roadmaps',
+    icon: Map,
+    accentClass: 'cyan',
+  },
+  {
+    title: 'Roadmap Planner',
+    description: 'Generate your custom learning plan',
+    to: '/roadmap-generator',
+    icon: Sparkles,
+    accentClass: 'purple',
+  },
+  {
+    title: 'Interview Guide',
+    description: 'Practice questions and prep',
+    to: '/interview-prep',
+    icon: Target,
+    accentClass: 'orange',
+  },
+  {
+    title: 'AI Chat Bot',
+    description: 'Ask career questions instantly',
+    to: '/ai-assistant',
+    icon: FileText,
+    accentClass: 'purple',
+  },
+  {
+    title: 'CV Generator',
+    description: 'Write supporting docs faster',
+    to: '/cover-letter',
+    icon: FilePenLine,
+    accentClass: 'orange',
+  },
+  {
+    title: 'Portfolio Builder',
+    description: 'Publish your projects neatly',
+    to: '/portfolio',
+    icon: Globe,
+    accentClass: 'cyan',
+  },
+];
+
+const getCalendarTaskMeta = (taskName: string) => {
+  const normalized = taskName.toLowerCase();
+
+  if (normalized.includes('resume')) {
+    return 'Resume review';
+  }
+
+  if (normalized.includes('portfolio')) {
+    return 'Design';
+  }
+
+  if (normalized.includes('keyword')) {
+    return 'Research';
+  }
+
+  if (normalized.includes('mock') || normalized.includes('interview')) {
+    return 'Interview prep';
+  }
+
+  if (normalized.includes('ats')) {
+    return 'ATS analysis';
+  }
+
+  return 'Scheduled task';
+};
+
+const getCalendarAccentClass = (accentClass: string) => {
+  if (accentClass === 'cyan') {
+    return 'bg-[#8ed8df]';
+  }
+
+  if (accentClass === 'purple') {
+    return 'bg-[#7a3f93]';
+  }
+
+  return 'bg-[#ff8a58]';
+};
+
 const Dashboard: React.FC = () => {
-  const stats = [
-    { label: 'Jobs Applied', value: '24', icon: Briefcase, color: 'blue', change: '+12%' },
-    { label: 'ATS Score Avg', value: '78%', icon: FileText, color: 'green', change: '+5%' },
-    { label: 'Portfolio Views', value: '156', icon: Globe, color: 'purple', change: '+23%' },
-    { label: 'Skills Progress', value: '67%', icon: TrendingUp, color: 'orange', change: '+15%' },
-  ];
+  const { user } = useAuth();
+  const uploadInputRef = useRef<HTMLInputElement | null>(null);
+  const [dashboardData, setDashboardData] = useState<UserDashboardData | null>(null);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editingCalendarTaskId, setEditingCalendarTaskId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<TaskDraft>(emptyDraft);
+  const [calendarDraft, setCalendarDraft] = useState<CalendarDraft>(emptyCalendarDraft);
 
-  const recentJobs = [
-    { title: 'Frontend Developer', company: 'TechCorp', location: 'Remote', posted: '2 hours ago', saved: true },
-    { title: 'Full Stack Engineer', company: 'StartupXYZ', location: 'Bangalore', posted: '5 hours ago', saved: false },
-    { title: 'React Developer', company: 'InnovateLabs', location: 'Hyderabad', posted: '1 day ago', saved: true },
-  ];
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
 
-  const todayTasks = [
-    { task: 'Update resume with new project', completed: false },
-    { task: 'Apply to 3 frontend positions', completed: true },
-    { task: 'Complete DSA practice problems', completed: false },
-    { task: 'Review portfolio feedback', completed: true },
-  ];
+    setDashboardData(readDashboardData({ id: user.id, email: user.email }));
+  }, [user]);
+
+  const persistData = (updater: (current: UserDashboardData) => UserDashboardData) => {
+    if (!user) {
+      return;
+    }
+
+    const next = updateDashboardData({ id: user.id, email: user.email }, updater);
+    setDashboardData(next);
+  };
+
+  const openCreateTaskModal = () => {
+    setEditingTaskId(null);
+    setDraft(emptyDraft);
+    setIsTaskModalOpen(true);
+  };
+
+  const openEditTaskModal = (task: DashboardTask) => {
+    setEditingTaskId(task.id);
+    setDraft({
+      title: task.title,
+      description: task.description,
+      dueDate: task.dueDate,
+    });
+    setIsTaskModalOpen(true);
+  };
+
+  const closeTaskModal = () => {
+    setIsTaskModalOpen(false);
+    setEditingTaskId(null);
+    setDraft(emptyDraft);
+  };
+
+  const openCreateCalendarModal = () => {
+    setEditingCalendarTaskId(null);
+    setCalendarDraft(emptyCalendarDraft);
+    setIsCalendarModalOpen(true);
+  };
+
+  const openEditCalendarModal = (task: CalendarTask) => {
+    setEditingCalendarTaskId(task.id);
+    setCalendarDraft({
+      time: task.time,
+      period: task.period,
+      task: task.task,
+    });
+    setIsCalendarModalOpen(true);
+  };
+
+  const closeCalendarModal = () => {
+    setIsCalendarModalOpen(false);
+    setEditingCalendarTaskId(null);
+    setCalendarDraft(emptyCalendarDraft);
+  };
+
+  const saveTask = () => {
+    if (!draft.title.trim()) {
+      return;
+    }
+
+    persistData((current) => {
+      if (editingTaskId) {
+        return {
+          ...current,
+          tasks: current.tasks.map((task) =>
+            task.id === editingTaskId
+              ? {
+                  ...task,
+                  title: draft.title.trim(),
+                  description: draft.description.trim(),
+                  dueDate: draft.dueDate,
+                }
+              : task,
+          ),
+        };
+      }
+
+      return {
+        ...current,
+        tasks: [
+          {
+            id: createTaskId(),
+            title: draft.title.trim(),
+            description: draft.description.trim(),
+            dueDate: draft.dueDate,
+            completed: false,
+            createdAt: new Date().toISOString(),
+          },
+          ...current.tasks,
+        ],
+      };
+    });
+
+    closeTaskModal();
+  };
+
+  const toggleTaskComplete = (taskId: string) => {
+    persistData((current) => ({
+      ...current,
+      tasks: current.tasks.map((task) =>
+        task.id === taskId ? { ...task, completed: !task.completed } : task,
+      ),
+    }));
+  };
+
+  const deleteTask = (taskId: string) => {
+    persistData((current) => ({
+      ...current,
+      tasks: current.tasks.filter((task) => task.id !== taskId),
+    }));
+  };
+
+  const saveCalendarTask = () => {
+    if (!calendarDraft.time.trim() || !calendarDraft.task.trim()) {
+      return;
+    }
+
+    persistData((current) => {
+      if (editingCalendarTaskId) {
+        return {
+          ...current,
+          calendarTasks: current.calendarTasks.map((item) =>
+            item.id === editingCalendarTaskId
+              ? {
+                  ...item,
+                  time: calendarDraft.time.trim(),
+                  period: calendarDraft.period,
+                  task: calendarDraft.task.trim(),
+                }
+              : item,
+          ),
+        };
+      }
+
+      return {
+        ...current,
+        calendarTasks: [
+          {
+            id: createTaskId(),
+            time: calendarDraft.time.trim(),
+            period: calendarDraft.period,
+            task: calendarDraft.task.trim(),
+            dateLabel: 'Today',
+            accentClass: 'cyan',
+          },
+          ...current.calendarTasks,
+        ],
+      };
+    });
+
+    closeCalendarModal();
+  };
+
+  const deleteCalendarTask = (taskId: string) => {
+    persistData((current) => ({
+      ...current,
+      calendarTasks: current.calendarTasks.filter((item) => item.id !== taskId),
+    }));
+  };
+
+  const handleDashboardResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) {
+      return;
+    }
+
+    const dataUrl = await fileToDataUrl(file);
+    const nextResume: StoredResumeFile = {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      dataUrl,
+      uploadedAt: new Date().toISOString(),
+    };
+
+    persistData((current) => ({
+      ...current,
+      resume: nextResume,
+    }));
+
+    event.target.value = '';
+  };
+
+  const atsCards = useMemo(() => {
+    const metrics = dashboardData?.atsMetrics;
+    return [
+      {
+        title: 'ATS Score',
+        value: metrics ? `${metrics.score}%` : '--',
+        meta: metrics ? 'Latest resume analysis' : 'Run ATS checker to populate',
+        colorClass: 'purple',
+      },
+      {
+        title: 'Resume Strength',
+        value: metrics ? `${metrics.resumeStrength}%` : '--',
+        meta: metrics ? 'Average quality signal' : 'Saved per user account',
+        colorClass: 'cyan',
+      },
+      {
+        title: 'Keyword Match',
+        value: metrics ? `${metrics.keywordMatch}%` : '--',
+        meta: metrics ? 'Match against target job' : 'No analysis yet',
+        colorClass: 'orange',
+      },
+    ];
+  }, [dashboardData?.atsMetrics]);
+
+  const tasks = dashboardData?.tasks ?? [];
+  const calendarGroups = useMemo(() => {
+    const items = dashboardData?.calendarTasks ?? [];
+    return Array.from(new Set(items.map((item) => item.dateLabel))).map((dateLabel) => ({
+      date: dateLabel,
+      items: items.filter((item) => item.dateLabel === dateLabel),
+    }));
+  }, [dashboardData?.calendarTasks]);
+  const firstName = user?.name?.split(' ')[0] || 'User';
 
   return (
     <div className="dashboard-page">
-      <div className="dashboard-header">
-        <div>
-          <h1 className="dashboard-title">Welcome back!</h1>
-          <p className="dashboard-subtitle">Here's your career progress overview</p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <div className="text-right">
-            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Current Streak</p>
-            <p className="text-2xl font-bold" style={{ color: 'var(--accent)' }}>🔥 7 days</p>
-          </div>
-        </div>
-      </div>
+      <div className="dashboard-board">
+        <section className="dashboard-main-panel dashboard-main-panel-full">
+          <div className="dashboard-main-top">
+            <div>
+              <h1>Hello, {firstName}</h1>
+              <p>{user?.email}</p>
+            </div>
 
-      <div className="stats-grid">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
-          
-          return (
-            <div key={index} className="tucf-card">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>{stat.label}</p>
-                  <p className="text-2xl font-bold mt-1" style={{ color: 'var(--text-primary)' }}>{stat.value}</p>
-                  <p className="text-sm font-medium mt-1" style={{ color: 'var(--accent)' }}>
-                    {stat.change} from last week
-                  </p>
+            <div className="dashboard-main-actions">
+              <ThemeToggle />
+              <button className="dashboard-icon-button" type="button" aria-label="Search">
+                <Search size={18} />
+              </button>
+              <input
+                ref={uploadInputRef}
+                type="file"
+                accept=".pdf,application/pdf"
+                className="dashboard-hidden-input"
+                onChange={handleDashboardResumeUpload}
+              />
+              {dashboardData?.resume ? (
+                <button
+                  className="dashboard-primary-button"
+                  type="button"
+                  onClick={() => downloadStoredResume(dashboardData.resume!)}
+                >
+                  <Download size={16} />
+                  Download Resume
+                </button>
+              ) : (
+                <button
+                  className="dashboard-primary-button"
+                  type="button"
+                  onClick={() => uploadInputRef.current?.click()}
+                >
+                  <Upload size={16} />
+                  Upload Resume
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="dashboard-project-grid">
+            {atsCards.map((card) => (
+              <article key={card.title} className={`dashboard-project-card ${card.colorClass}`}>
+                <div className="dashboard-project-top">
+                  <span className="dashboard-project-count">{card.value}</span>
+                  <div className="dashboard-project-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
                 </div>
-                <div className="p-3 rounded-lg" style={{ background: 'rgba(255, 122, 0, 0.14)' }}>
-                  <Icon className="h-6 w-6" style={{ color: 'var(--accent)' }} />
+                <h3>{card.title}</h3>
+                <p>{card.meta}</p>
+                <div className="dashboard-project-progress">
+                  <span
+                    style={{
+                      width:
+                        card.value === '--' ? '18%' : `${Number.parseInt(card.value, 10) || 0}%`,
+                    }}
+                  ></span>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div className="dashboard-lower-grid">
+            <div className="dashboard-section">
+              <div className="dashboard-section-head">
+                <h2>Tasks</h2>
+                <button
+                  className="dashboard-mini-action"
+                  type="button"
+                  aria-label="Add task"
+                  onClick={openCreateTaskModal}
+                >
+                  <Plus size={16} />
+                </button>
+              </div>
+
+              <div className="dashboard-task-list">
+                {tasks.length > 0 ? (
+                  tasks.map((task) => (
+                    <article key={task.id} className="dashboard-task-surface group relative overflow-hidden">
+                      <span
+                        className={`absolute inset-y-0 left-0 w-[6px] ${task.completed ? 'bg-[#8ed8df]' : 'bg-[#ff8a58]'}`}
+                      ></span>
+
+                      <div className="dashboard-task-row flex min-w-0 flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:gap-5 sm:pl-6">
+                        <button
+                          type="button"
+                          onClick={() => toggleTaskComplete(task.id)}
+                          aria-label={task.completed ? 'Mark incomplete' : 'Mark complete'}
+                          className="flex min-w-0 flex-1 items-start gap-4 text-left"
+                        >
+                          <span
+                            className={`dashboard-task-toggle mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border-2 transition-all duration-300 ${
+                              task.completed ? 'done' : ''
+                            }`}
+                          >
+                            {task.completed ? <Plus size={12} /> : null}
+                          </span>
+
+                          <span className="min-w-0 flex-1">
+                            <span className="dashboard-task-title block truncate text-[1.05rem] font-semibold">
+                              {task.title}
+                            </span>
+                            <span className="dashboard-task-description mt-1 block truncate text-sm">
+                              {task.description || 'No description added yet.'}
+                            </span>
+                            <span className="dashboard-task-date-meta mt-2 block text-xs font-medium">
+                              {task.dueDate ? `Due ${task.dueDate}` : 'No due date set'}
+                            </span>
+                          </span>
+                        </button>
+
+                        <div className="dashboard-task-row-actions flex flex-shrink-0 items-center justify-end gap-2 sm:justify-center">
+                          <button
+                            className="dashboard-task-action-button flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-300 hover:scale-110"
+                            type="button"
+                            onClick={() => openEditTaskModal(task)}
+                            aria-label="Edit task"
+                          >
+                            <Pencil size={15} />
+                          </button>
+                          <button
+                            className="dashboard-task-action-button danger flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-300 hover:scale-110"
+                            type="button"
+                            onClick={() => deleteTask(task.id)}
+                            aria-label="Delete task"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  ))
+                ) : (
+                  <div className="dashboard-empty-card">
+                    <p>No tasks yet for this user. Use the + button to create one.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="dashboard-section">
+              <div className="dashboard-section-head">
+                <h2>Statistics</h2>
+              </div>
+              <div className="dashboard-stat-grid">
+                <div className="dashboard-stat-card">
+                  <strong>{tasks.length}</strong>
+                  <span>Total tasks</span>
+                </div>
+                <div className="dashboard-stat-card">
+                  <strong>{tasks.filter((task) => task.completed).length}</strong>
+                  <span>Completed tasks</span>
+                </div>
+                <div className="dashboard-stat-card">
+                  <strong>{dashboardData?.resume ? 'Yes' : 'No'}</strong>
+                  <span>Resume uploaded</span>
+                </div>
+                <div className="dashboard-plan-card">
+                  <div className="dashboard-plan-copy">
+                    <strong>{dashboardData?.atsMetrics?.score ?? '--'}</strong>
+                    <span>{dashboardData?.atsMetrics ? '%' : ''}</span>
+                    <h3>Latest ATS Result</h3>
+                    <p>
+                      {dashboardData?.atsMetrics
+                        ? dashboardData.atsMetrics.resumeFileName
+                        : 'Analyze a resume to see account-specific ATS data here.'}
+                    </p>
+                  </div>
+                  <div className="dashboard-plan-illustration">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
                 </div>
               </div>
             </div>
-          );
-        })}
-      </div>
-
-      <div className="content-grid">
-        <div className="content-wide tucf-card">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>Recent Job Matches</h2>
-            <button className="text-sm font-medium" style={{ color: 'var(--accent)' }}>View all</button>
           </div>
-          <div className="space-y-4">
-            {recentJobs.map((job, index) => (
-              <div key={index} className="flex items-center justify-between p-4 rounded-lg transition-colors" style={{ background: '#0f0f0f', border: '1px solid var(--border)' }}>
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <h3 className="font-medium" style={{ color: 'var(--text-primary)' }}>{job.title}</h3>
-                    {job.saved && <Star className="h-4 w-4 fill-current" style={{ color: 'var(--accent)' }} />}
-                  </div>
-                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{job.company} • {job.location}</p>
-                  <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>{job.posted}</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <button className="px-3 py-1 text-sm tucf-btn-primary">
-                    Apply
+
+          <div className="dashboard-section">
+            <div className="dashboard-section-head">
+              <h2>All Modules</h2>
+            </div>
+            <div className="dashboard-module-grid">
+              {moduleLinks.map((module) => {
+                const Icon = module.icon;
+
+                return (
+                  <Link key={module.title} to={module.to} className={`dashboard-module-card ${module.accentClass}`}>
+                    <div className="dashboard-module-icon">
+                      <Icon size={18} />
+                    </div>
+                    <div>
+                      <h3>{module.title}</h3>
+                      <p>{module.description}</p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        <aside className="dashboard-calendar-rail">
+          <div className="dashboard-calendar-top">
+            <h2>Calendar</h2>
+            <div className="dashboard-calendar-actions">
+              <button
+                className="dashboard-mini-action"
+                type="button"
+                aria-label="Add calendar task"
+                onClick={openCreateCalendarModal}
+              >
+                <Plus size={16} />
+              </button>
+              <button className="dashboard-icon-button light" type="button" aria-label="Notifications">
+                <Bell size={16} />
+              </button>
+            </div>
+          </div>
+
+          <div className="dashboard-calendar-summary">
+            <CalendarDays size={18} />
+            <span>
+              {dashboardData?.atsMetrics
+                ? `Latest ATS analysis saved ${new Date(
+                    dashboardData.atsMetrics.analyzedAt,
+                  ).toLocaleDateString()}`
+                : 'No ATS analysis saved yet'}
+            </span>
+          </div>
+
+          <div className="dashboard-calendar-list">
+            {calendarGroups.map((day) => (
+              <section key={day.date} className="dashboard-calendar-day">
+                <div className="dashboard-calendar-day-header">
+                  <span>{day.date}</span>
+                  <button type="button" aria-label="More options">
+                    ...
                   </button>
                 </div>
-              </div>
+
+                <div className="flex flex-col gap-4">
+                  {day.items.map((item) => (
+                    <div
+                      key={item.id}
+                      className="group flex w-full items-center gap-4 rounded-xl px-3 py-3 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    >
+                      <div className="w-20 shrink-0 pt-0.5 text-sm font-semibold leading-5 text-[#2f2140] dark:text-white">
+                        {item.time} {item.period}
+                      </div>
+
+                      <div className="min-w-0 flex flex-1 items-center gap-3">
+                        <div
+                          className={`h-full min-h-[44px] w-[3px] shrink-0 rounded-full ${getCalendarAccentClass(
+                            item.accentClass,
+                          )}`}
+                        />
+
+                        <div className="min-w-0 flex-1">
+                          <p className="m-0 text-xs leading-5 text-[#9f9aa8] break-words dark:text-gray-400">
+                            {getCalendarTaskMeta(item.task)}
+                          </p>
+                          <h3 className="m-0 text-sm font-medium leading-5 text-[#332245] break-words dark:text-white">
+                            {item.task}
+                          </h3>
+                        </div>
+                      </div>
+
+                      <div className="ml-2 flex shrink-0 items-center gap-1">
+                        <button
+                          type="button"
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[#6a6078] transition-colors duration-200 hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700"
+                          aria-label="Edit calendar task"
+                          onClick={() => openEditCalendarModal(item)}
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[#6a6078] transition-colors duration-200 hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700"
+                          aria-label="Delete calendar task"
+                          onClick={() => deleteCalendarTask(item.id)}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
             ))}
           </div>
-        </div>
-
-        <div className="tucf-card">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>Today's Tasks</h2>
-            <Calendar className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
-          </div>
-          <div className="space-y-3">
-            {todayTasks.map((item, index) => (
-              <div key={index} className="flex items-center space-x-3">
-                <button className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-                  item.completed
-                    ? 'bg-orange-500 border-orange-500'
-                    : 'border-[#2f2f2f] hover:border-orange-500'
-                }`}>
-                  {item.completed && <CheckCircle className="h-3 w-3 text-white" />}
-                </button>
-                <span
-                  className={`text-sm ${item.completed ? 'line-through' : ''}`}
-                  style={{ color: item.completed ? '#6b7280' : 'var(--text-secondary)' }}
-                >
-                  {item.task}
-                </span>
-              </div>
-            ))}
-          </div>
-          <button className="w-full mt-4 py-2 rounded-md text-sm font-medium transition-colors" style={{ color: 'var(--accent)', border: '1px solid var(--border)', background: 'rgba(255,122,0,0.08)' }}>
-            Add New Task
-          </button>
-        </div>
+        </aside>
       </div>
 
-      <div className="tucf-card">
-        <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-        <div className="quick-grid">
-          <button className="rounded-lg p-4 transition-colors" style={{ background: 'rgba(255,122,0,0.12)' }}>
-            <Briefcase className="h-6 w-6 mb-2" />
-            <p className="text-sm font-medium">Find Jobs</p>
-          </button>
-          <button className="rounded-lg p-4 transition-colors" style={{ background: 'rgba(255,122,0,0.12)' }}>
-            <FileText className="h-6 w-6 mb-2" />
-            <p className="text-sm font-medium">Check ATS Score</p>
-          </button>
-          <button className="rounded-lg p-4 transition-colors" style={{ background: 'rgba(255,122,0,0.12)' }}>
-            <Globe className="h-6 w-6 mb-2" />
-            <p className="text-sm font-medium">Update Portfolio</p>
-          </button>
-          <button className="rounded-lg p-4 transition-colors" style={{ background: 'rgba(255,122,0,0.12)' }}>
-            <TrendingUp className="h-6 w-6 mb-2" />
-            <p className="text-sm font-medium">View Progress</p>
-          </button>
+      {isTaskModalOpen && (
+        <div className="dashboard-modal-backdrop" onClick={closeTaskModal}>
+          <div className="dashboard-task-modal" onClick={(event) => event.stopPropagation()}>
+            <h2>{editingTaskId ? 'Edit Task' : 'Create Task'}</h2>
+            <label>
+              <span>Title</span>
+              <input
+                value={draft.title}
+                onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))}
+                placeholder="Task title"
+              />
+            </label>
+            <label>
+              <span>Description</span>
+              <textarea
+                rows={4}
+                value={draft.description}
+                onChange={(event) =>
+                  setDraft((current) => ({ ...current, description: event.target.value }))
+                }
+                placeholder="Task description"
+              />
+            </label>
+            <label>
+              <span>Due date</span>
+              <input
+                type="date"
+                value={draft.dueDate}
+                onChange={(event) => setDraft((current) => ({ ...current, dueDate: event.target.value }))}
+              />
+            </label>
+
+            <div className="dashboard-task-modal-actions">
+              <button type="button" className="dashboard-modal-secondary" onClick={closeTaskModal}>
+                Cancel
+              </button>
+              <button type="button" className="dashboard-primary-button" onClick={saveTask}>
+                {editingTaskId ? 'Save Changes' : 'Create Task'}
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {isCalendarModalOpen && (
+        <div className="dashboard-modal-backdrop" onClick={closeCalendarModal}>
+          <div className="dashboard-task-modal" onClick={(event) => event.stopPropagation()}>
+            <h2>{editingCalendarTaskId ? 'Edit Calendar Task' : 'Add Calendar Task'}</h2>
+            <label>
+              <span>Time</span>
+              <input
+                value={calendarDraft.time}
+                onChange={(event) =>
+                  setCalendarDraft((current) => ({ ...current, time: event.target.value }))
+                }
+                placeholder="09:30"
+              />
+            </label>
+            <label>
+              <span>AM / PM</span>
+              <select
+                value={calendarDraft.period}
+                onChange={(event) =>
+                  setCalendarDraft((current) => ({
+                    ...current,
+                    period: event.target.value as 'AM' | 'PM',
+                  }))
+                }
+              >
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+              </select>
+            </label>
+            <label>
+              <span>Task name</span>
+              <input
+                value={calendarDraft.task}
+                onChange={(event) =>
+                  setCalendarDraft((current) => ({ ...current, task: event.target.value }))
+                }
+                placeholder="Keyword targeting"
+              />
+            </label>
+
+            <div className="dashboard-task-modal-actions">
+              <button type="button" className="dashboard-modal-secondary" onClick={closeCalendarModal}>
+                Cancel
+              </button>
+              <button type="button" className="dashboard-primary-button" onClick={saveCalendarTask}>
+                {editingCalendarTaskId ? 'Save Changes' : 'Add Task'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

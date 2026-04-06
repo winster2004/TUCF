@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { safeParseJSON } from '../lib/safeJson';
 
-interface User {
+export interface User {
   id: string;
   name: string;
   email: string;
@@ -34,16 +35,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const createUserId = (email: string) =>
+    email.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'user';
+
   useEffect(() => {
     // Check for stored auth token and validate it
     const token = localStorage.getItem('authToken');
     const userData = localStorage.getItem('userData');
     
     if (token && userData) {
-      try {
-        const parsedUser = JSON.parse(userData);
+      const parsedUser = safeParseJSON<User>(userData, 'auth.userData');
+      if (parsedUser) {
         setUser(parsedUser);
-      } catch (error) {
+      } else {
         localStorage.removeItem('authToken');
         localStorage.removeItem('userData');
       }
@@ -55,11 +59,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string) => {
     try {
       // TODO: Replace with actual API call
+      const normalizedEmail = email.trim().toLowerCase();
+      const nameFromEmail = normalizedEmail.split('@')[0];
       const mockUser = {
-        id: '1',
-        name: email.split('@')[0],
-        email,
-        avatar: `https://ui-avatars.com/api/?name=${email.split('@')[0]}&background=3B82F6&color=fff`
+        id: createUserId(normalizedEmail),
+        name: nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1),
+        email: normalizedEmail,
+        avatar: `https://ui-avatars.com/api/?name=${nameFromEmail}&background=3B82F6&color=fff`
       };
       
       localStorage.setItem('authToken', 'mock-token');
@@ -73,10 +79,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const register = async (name: string, email: string, password: string) => {
     try {
       // TODO: Replace with actual API call
+      const normalizedEmail = email.trim().toLowerCase();
       const mockUser = {
-        id: '1',
+        id: createUserId(normalizedEmail),
         name,
-        email,
+        email: normalizedEmail,
         avatar: `https://ui-avatars.com/api/?name=${name}&background=3B82F6&color=fff`
       };
       

@@ -35,19 +35,19 @@ const Login: React.FC = () => {
               <span className="text-white font-bold text-lg">CP</span>
             </div>
           </div>
-          <h2 className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>Welcome back</h2>
-          <p className="mt-2" style={{ color: 'var(--text-secondary)' }}>Sign in to your CareerPro account</p>
+          <h2 className="text-3xl font-bold" style={{ color: '#2f2c2a' }}>Welcome back</h2>
+          <p className="mt-2" style={{ color: '#5a6673' }}>Sign in to your CareerPro account</p>
         </div>
 
         <form className="mt-8 space-y-6 tucf-card" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+              <label htmlFor="email" className="block text-sm font-medium mb-1" style={{ color: '#5a6673' }}>
                 Email Address
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
+                  <Mail className="h-5 w-5" style={{ color: '#8a7562' }} />
                 </div>
                 <input
                   id="email"
@@ -62,12 +62,12 @@ const Login: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+              <label htmlFor="password" className="block text-sm font-medium mb-1" style={{ color: '#5a6673' }}>
                 Password
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
+                  <Lock className="h-5 w-5" style={{ color: '#8a7562' }} />
                 </div>
                 <input
                   id="password"
@@ -84,9 +84,9 @@ const Login: React.FC = () => {
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
+                    <EyeOff className="h-5 w-5" style={{ color: '#8a7562' }} />
                   ) : (
-                    <Eye className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
+                    <Eye className="h-5 w-5" style={{ color: '#8a7562' }} />
                   )}
                 </button>
               </div>
@@ -105,7 +105,7 @@ const Login: React.FC = () => {
                 type="checkbox"
                 className="h-4 w-4 rounded"
               />
-              <label htmlFor="remember-me" className="ml-2 block text-sm" style={{ color: 'var(--text-primary)' }}>
+              <label htmlFor="remember-me" className="ml-2 block text-sm" style={{ color: '#2f2c2a' }}>
                 Remember me
               </label>
             </div>
@@ -133,7 +133,7 @@ const Login: React.FC = () => {
           </button>
 
           <div className="text-center">
-            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-sm" style={{ color: '#5a6673' }}>
               Don't have an account?{' '}
               <Link
                 to="/register"

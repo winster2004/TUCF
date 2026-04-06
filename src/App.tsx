@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/layout/Navbar';
 import Sidebar from './components/layout/Sidebar';
@@ -15,7 +15,9 @@ import ResumeBuilder from './pages/ResumeBuilder';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Landing from './pages/Landing';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { initializeTheme } from './lib/theme';
 import './App.css';
 import './Card.css';
 
@@ -35,9 +37,10 @@ function AppContent() {
     return (
       <div className="auth-shell">
         <Routes>
+          <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="*" element={<Navigate to="/login" />} />
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>
     );
@@ -51,7 +54,7 @@ function AppContent() {
         <main className={`app-main ${sidebarOpen ? 'sidebar-open' : ''}`}>
           <div className="app-content">
             <Routes>
-              <Route path="/" element={<Dashboard />} />
+              <Route path="/" element={<Landing embedded />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/jobs" element={<JobSearch />} />
               <Route path="/ats" element={<ATSScoring />} />
@@ -73,6 +76,10 @@ function AppContent() {
 }
 
 function App() {
+  useEffect(() => {
+    initializeTheme();
+  }, []);
+
   return (
     <Router>
       <AuthProvider>

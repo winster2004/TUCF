@@ -92,7 +92,7 @@ const JobSearch: React.FC = () => {
         </div>
 
         {showFilters && (
-          <div className="mt-6 p-4 rounded-lg border" style={{ background: '#0f0f0f', borderColor: 'var(--border)' }}>
+          <div className="mt-6 rounded-lg border border-gray-200 bg-gray-100 p-4 dark:border-gray-700 dark:bg-gray-800">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Experience</label>
@@ -201,7 +201,7 @@ const JobSearch: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <span className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>{job.salary}</span>
-                    <span className="px-2 py-1 text-sm rounded" style={{ background: '#0f0f0f', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
+                    <span className="rounded border border-gray-200 bg-gray-100 px-2 py-1 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
                       {job.type}
                     </span>
                   </div>

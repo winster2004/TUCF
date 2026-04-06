@@ -1,11 +1,11 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
-  Home, 
-  Briefcase, 
+  LayoutDashboard,
+  Briefcase,
   FileText, 
   Globe, 
-  Map, 
+  Map,
   Settings,
   FilePenLine,
   Target,
@@ -20,16 +20,16 @@ interface SidebarProps {
 }
 
 const menuItems = [
-  { path: '/dashboard', icon: Home, label: 'Dashboard' },
+  { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { path: '/jobs', icon: Briefcase, label: 'Job Search' },
-  { path: '/ats', icon: FileText, label: 'ATS Scoring' },
-  { path: '/portfolio', icon: Globe, label: 'Portfolio' },
+  { path: '/ats', icon: FileText, label: 'ATS Score Checker' },
+  { path: '/portfolio', icon: Globe, label: 'Portfolio Builder' },
   { path: '/roadmaps', icon: Map, label: 'Roadmaps' },
-  { path: '/cover-letter', icon: FilePenLine, label: 'Cover Letter Generator' },
-  { path: '/interview-prep', icon: Target, label: 'Interview Prep' },
-  { path: '/roadmap-generator', icon: Milestone, label: 'Roadmap Generator' },
+  { path: '/roadmap-generator', icon: Milestone, label: 'Roadmap Planner' },
+  { path: '/interview-prep', icon: Target, label: 'Interview Guide' },
+  { path: '/ai-assistant', icon: Bot, label: 'AI Chat Bot' },
+  { path: '/cover-letter', icon: FilePenLine, label: 'CV Generator' },
   { path: '/resume-builder', icon: ScrollText, label: 'Resume Builder' },
-  { path: '/ai-assistant', icon: Bot, label: 'AI Assistant' },
   { path: '/settings', icon: Settings, label: 'Settings' },
 ];
 

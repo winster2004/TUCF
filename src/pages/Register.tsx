@@ -44,19 +44,19 @@ const Register: React.FC = () => {
               <span className="text-white font-bold text-lg">CP</span>
             </div>
           </div>
-          <h2 className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>Create your account</h2>
-          <p className="mt-2" style={{ color: 'var(--text-secondary)' }}>Join CareerPro and accelerate your career</p>
+          <h2 className="text-3xl font-bold" style={{ color: '#2f2c2a' }}>Create your account</h2>
+          <p className="mt-2" style={{ color: '#5a6673' }}>Join CareerPro and accelerate your career</p>
         </div>
 
         <form className="mt-8 space-y-6 tucf-card" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+              <label htmlFor="name" className="block text-sm font-medium mb-1" style={{ color: '#5a6673' }}>
                 Full Name
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
+                  <User className="h-5 w-5" style={{ color: '#8a7562' }} />
                 </div>
                 <input
                   id="name"
@@ -71,12 +71,12 @@ const Register: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+              <label htmlFor="email" className="block text-sm font-medium mb-1" style={{ color: '#5a6673' }}>
                 Email Address
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
+                  <Mail className="h-5 w-5" style={{ color: '#8a7562' }} />
                 </div>
                 <input
                   id="email"
@@ -91,12 +91,12 @@ const Register: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+              <label htmlFor="password" className="block text-sm font-medium mb-1" style={{ color: '#5a6673' }}>
                 Password
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
+                  <Lock className="h-5 w-5" style={{ color: '#8a7562' }} />
                 </div>
                 <input
                   id="password"
@@ -113,21 +113,21 @@ const Register: React.FC = () => {
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
+                    <EyeOff className="h-5 w-5" style={{ color: '#8a7562' }} />
                   ) : (
-                    <Eye className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
+                    <Eye className="h-5 w-5" style={{ color: '#8a7562' }} />
                   )}
                 </button>
               </div>
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1" style={{ color: '#5a6673' }}>
                 Confirm Password
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
+                  <Lock className="h-5 w-5" style={{ color: '#8a7562' }} />
                 </div>
                 <input
                   id="confirmPassword"
@@ -144,9 +144,9 @@ const Register: React.FC = () => {
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
                   {showConfirmPassword ? (
-                    <EyeOff className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
+                    <EyeOff className="h-5 w-5" style={{ color: '#8a7562' }} />
                   ) : (
-                    <Eye className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
+                    <Eye className="h-5 w-5" style={{ color: '#8a7562' }} />
                   )}
                 </button>
               </div>
@@ -165,7 +165,7 @@ const Register: React.FC = () => {
               required
               className="h-4 w-4 rounded mt-1"
             />
-            <label htmlFor="terms" className="ml-2 block text-sm" style={{ color: 'var(--text-primary)' }}>
+            <label htmlFor="terms" className="ml-2 block text-sm" style={{ color: '#2f2c2a' }}>
               I agree to the{' '}
               <button type="button" style={{ color: 'var(--accent)' }}>
                 Terms of Service
@@ -193,7 +193,7 @@ const Register: React.FC = () => {
           </button>
 
           <div className="text-center">
-            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-sm" style={{ color: '#5a6673' }}>
               Already have an account?{' '}
               <Link
                 to="/login"

@@ -69,12 +69,12 @@ const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ generatedHtml, prev
     return (
       <div
         ref={containerRef}
-        className="fixed inset-0 z-50 bg-black flex flex-col"
+        className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-[#0b0f19]"
         role="region"
         aria-label="Fullscreen portfolio preview"
       >
         <div className="px-4 py-3 flex items-center justify-between" style={{ background: 'var(--bg-sidebar)', borderBottom: '1px solid var(--border)' }}>
-          <h3 className="text-white font-semibold">Portfolio Preview (Fullscreen)</h3>
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100">Portfolio Preview (Fullscreen)</h3>
           <button
             onClick={() => {
               document.exitFullscreen().catch(() => {
@@ -88,16 +88,16 @@ const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ generatedHtml, prev
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="flex-1 flex justify-center items-start overflow-auto bg-black p-4">
+        <div className="flex flex-1 items-start justify-center overflow-auto bg-gray-100 p-4 dark:bg-[#0f172a]">
           <div
-            style={{ width: previewWidths[previewMode], background: '#0f0f0f', border: '1px solid var(--border)' }}
-            className="rounded-lg overflow-hidden shadow-2xl"
+            style={{ width: previewWidths[previewMode], border: '1px solid var(--border)' }}
+            className="rounded-lg overflow-hidden bg-white shadow-2xl dark:bg-[#0f172a]"
           >
             <iframe
               key={previewKey}
               title="Portfolio Preview"
               srcDoc={enhancedHtml}
-              className="w-full h-screen border-none"
+              className="w-full h-screen border-none bg-white dark:bg-[#0f172a]"
               style={{
                 height: '100vh',
               }}
@@ -126,8 +126,7 @@ const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ generatedHtml, prev
           </div>
           <button
             onClick={handleFullscreenClick}
-            className="p-2 rounded-lg transition"
-            style={{ background: '#0f0f0f', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
+            className="rounded-lg border border-gray-200 bg-white p-2 text-gray-600 transition dark:border-gray-700 dark:bg-[#0f172a] dark:text-gray-300"
             title="Enter fullscreen"
             aria-label="Enter fullscreen mode"
           >
@@ -140,8 +139,8 @@ const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ generatedHtml, prev
             <button
               key={mode}
               onClick={() => setPreviewMode(mode)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${previewMode === mode ? 'text-white' : ''}`}
-              style={previewMode === mode ? { background: 'var(--accent)', color: '#fff' } : { background: '#0f0f0f', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${previewMode === mode ? '' : 'border border-gray-200 bg-white text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200'}`}
+              style={previewMode === mode ? { background: 'var(--accent)', color: '#fff' } : undefined}
               aria-pressed={previewMode === mode}
             >
               {mode.charAt(0).toUpperCase() + mode.slice(1)}
@@ -152,27 +151,19 @@ const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ generatedHtml, prev
 
       <div
         ref={previewContainerRef}
-        className="flex-1 overflow-hidden flex justify-center items-start p-4"
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'flex-start',
-          overflow: 'auto',
-          background: '#0a0a0a',
-        }}
+        className="flex flex-1 items-start justify-center overflow-auto bg-gray-100 p-4 dark:bg-[#0f172a]"
       >
         <div
           style={{
             width: previewWidths[previewMode],
             height: '100%',
-            background: '#0f0f0f',
             border: '1px solid var(--border)',
           }}
-          className="rounded-xl overflow-hidden flex flex-col"
+          className="rounded-xl overflow-hidden flex flex-col bg-white dark:bg-[#0f172a]"
         >
-          <div className="h-10 border-b flex items-center px-4 gap-3" style={{ background: '#111111', borderBottomColor: 'var(--border)' }}>
-            <span className="h-2.5 w-2.5 rounded-full" style={{ background: '#2f2f2f' }}></span>
-            <span className="h-2.5 w-2.5 rounded-full" style={{ background: '#7a3d00' }}></span>
+          <div className="h-10 border-b flex items-center px-4 gap-3 bg-gray-100 dark:bg-gray-800" style={{ borderBottomColor: 'var(--border)' }}>
+            <span className="h-2.5 w-2.5 rounded-full bg-gray-400 dark:bg-gray-500"></span>
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-500"></span>
             <span className="h-2.5 w-2.5 rounded-full" style={{ background: 'var(--accent)' }}></span>
           </div>
 
@@ -181,7 +172,7 @@ const PortfolioPreview: React.FC<PortfolioPreviewProps> = ({ generatedHtml, prev
               key={previewKey}
               title="Portfolio Preview"
               srcDoc={enhancedHtml}
-              className="w-full h-full border-none"
+              className="w-full h-full border-none bg-white dark:bg-[#0f172a]"
             />
           </div>
         </div>

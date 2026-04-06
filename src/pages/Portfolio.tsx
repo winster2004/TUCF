@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Download, Eye, FolderGit2, LayoutTemplate, Palette, User, Wrench } from 'lucide-react';
 import PortfolioPreview from '../components/PortfolioPreview';
+import { safeParseJSON } from '../lib/safeJson';
 import {
   generatePortfolio,
   uploadPortfolioResume,
@@ -118,17 +119,20 @@ const REQUIRED_MARKERS = [
   'Designed with Portfolio Maker',
 ];
 
+const portfolioFieldClass =
+  'w-full rounded-xl border border-white/10 bg-[#0b0f19] px-3 py-2 text-white placeholder-gray-500 focus:ring-2 focus:ring-orange-500';
+
 const Portfolio: React.FC = () => {
   const [formData, setFormData] = useState<PortfolioFormData>(() => {
     const saved = localStorage.getItem(FORM_STORAGE_KEY);
     if (!saved) {
       return initialForm;
     }
-    try {
-      return normalizeFormData(JSON.parse(saved) as Partial<PortfolioFormData>);
-    } catch {
+    const parsed = safeParseJSON<Partial<PortfolioFormData>>(saved, 'portfolio.form');
+    if (!parsed || typeof parsed !== 'object') {
       return initialForm;
     }
+    return normalizeFormData(parsed);
   });
   const [uploadedResumeDataUrl, setUploadedResumeDataUrl] = useState(
     () => localStorage.getItem(RESUME_STORAGE_KEY) || '',
@@ -333,17 +337,24 @@ const Portfolio: React.FC = () => {
           <h3 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Choose Template</h3>
           <div className="grid gap-3">
             {['minimal', 'modern', 'split'].map((option) => (
+              (() => {
+                const isActive = formData.template === option;
+
+                return (
               <button
                 key={option}
                 type="button"
                 onClick={() => setFormData((prev) => ({ ...prev, template: option as TemplateOption }))}
-                className={`rounded-2xl border p-5 text-left transition ${
-                  formData.template === option ? 'text-white' : ''
+                className={`w-full rounded-xl px-6 py-4 text-left text-2xl font-semibold transition-all duration-300 ${
+                  isActive
+                    ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
+                    : 'bg-[#1f2937] text-gray-300 hover:bg-orange-500 hover:text-white'
                 }`}
-                style={formData.template === option ? { background: 'rgba(255,122,0,0.15)', color: 'var(--accent)', borderColor: 'rgba(255,122,0,0.4)' } : { background: '#0f0f0f', color: 'var(--text-secondary)', borderColor: 'var(--border)' }}
               >
                 <p className="text-4xl font-black capitalize">{option}</p>
               </button>
+                );
+              })()
             ))}
           </div>
         </div>
@@ -355,18 +366,18 @@ const Portfolio: React.FC = () => {
         <div className="space-y-4">
           <h3 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Personal Info</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <input name="fullName" value={safeText(formData.fullName)} onChange={handleChange} placeholder="Full name" className="rounded-xl px-3 py-2" />
-            <input name="title" value={safeText(formData.title)} onChange={handleChange} placeholder="Role title" className="rounded-xl px-3 py-2" />
-            <input name="email" value={safeText(formData.email)} onChange={handleChange} placeholder="Email" className="rounded-xl px-3 py-2" />
-            <input name="location" value={safeText(formData.location)} onChange={handleChange} placeholder="Location" className="rounded-xl px-3 py-2" />
-            <input name="github" value={safeText(formData.github)} onChange={handleChange} placeholder="GitHub URL" className="rounded-xl px-3 py-2" />
-            <input name="linkedin" value={safeText(formData.linkedin)} onChange={handleChange} placeholder="LinkedIn URL" className="rounded-xl px-3 py-2" />
-            <input name="resumeUrl" value={safeText(formData.resumeUrl)} onChange={handleChange} placeholder="Resume URL" className="rounded-xl px-3 py-2" />
-            <input name="hireLink" value={safeText(formData.hireLink)} onChange={handleChange} placeholder="Hire link / mailto" className="rounded-xl px-3 py-2" />
+            <input name="fullName" value={safeText(formData.fullName)} onChange={handleChange} placeholder="Full name" className={portfolioFieldClass} />
+            <input name="title" value={safeText(formData.title)} onChange={handleChange} placeholder="Role title" className={portfolioFieldClass} />
+            <input name="email" value={safeText(formData.email)} onChange={handleChange} placeholder="Email" className={portfolioFieldClass} />
+            <input name="location" value={safeText(formData.location)} onChange={handleChange} placeholder="Location" className={portfolioFieldClass} />
+            <input name="github" value={safeText(formData.github)} onChange={handleChange} placeholder="GitHub URL" className={portfolioFieldClass} />
+            <input name="linkedin" value={safeText(formData.linkedin)} onChange={handleChange} placeholder="LinkedIn URL" className={portfolioFieldClass} />
+            <input name="resumeUrl" value={safeText(formData.resumeUrl)} onChange={handleChange} placeholder="Resume URL" className={portfolioFieldClass} />
+            <input name="hireLink" value={safeText(formData.hireLink)} onChange={handleChange} placeholder="Hire link / mailto" className={portfolioFieldClass} />
           </div>
-          <input name="profileImageUrl" value={safeText(formData.profileImageUrl)} onChange={handleChange} placeholder="Profile image URL" className="w-full rounded-xl px-3 py-2" />
-          <input name="tagline" value={safeText(formData.tagline)} onChange={handleChange} placeholder="Tagline" className="w-full rounded-xl px-3 py-2" />
-          <textarea name="bio" value={safeText(formData.bio)} onChange={handleChange} placeholder="Short intro" className="w-full h-24 rounded-xl px-3 py-2 resize-none" />
+          <input name="profileImageUrl" value={safeText(formData.profileImageUrl)} onChange={handleChange} placeholder="Profile image URL" className={portfolioFieldClass} />
+          <input name="tagline" value={safeText(formData.tagline)} onChange={handleChange} placeholder="Tagline" className={portfolioFieldClass} />
+          <textarea name="bio" value={safeText(formData.bio)} onChange={handleChange} placeholder="Short intro" className={`${portfolioFieldClass} h-24 resize-none`} />
         </div>
       );
     }
@@ -375,9 +386,9 @@ const Portfolio: React.FC = () => {
       return (
         <div className="space-y-4">
           <h3 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Experience & Education</h3>
-          <div className="rounded-xl p-3" style={{ border: '1px solid var(--border)', background: '#0f0f0f' }}>
+          <div className="rounded-xl border border-gray-200 bg-gray-100 p-3 dark:border-gray-700 dark:bg-gray-800">
             <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Upload Resume (PDF)</label>
-            <input type="file" accept="application/pdf,.pdf" onChange={handleResumeUpload} className="block w-full text-sm" />
+            <input type="file" accept="application/pdf,.pdf" onChange={handleResumeUpload} className="block w-full text-sm text-gray-300 file:mr-4 file:rounded-lg file:border-0 file:bg-[#111827] file:px-4 file:py-2 file:text-gray-200 hover:file:bg-white/5" />
             <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>
               {uploadedResumeDataUrl
                 ? `Uploaded: ${uploadedResumeFileName}. Navbar Resume button will download this PDF.`
@@ -385,9 +396,9 @@ const Portfolio: React.FC = () => {
             </p>
           </div>
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Education format: Degree | College | Years</p>
-          <textarea name="education" value={safeText(formData.education)} onChange={handleChange} className="w-full h-24 rounded-xl px-3 py-2 resize-none" />
+          <textarea name="education" value={safeText(formData.education)} onChange={handleChange} className={`${portfolioFieldClass} h-24 resize-none`} />
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Experience format: Role | Company | Duration | Description</p>
-          <textarea name="experience" value={safeText(formData.experience)} onChange={handleChange} className="w-full h-28 rounded-xl px-3 py-2 resize-none" />
+          <textarea name="experience" value={safeText(formData.experience)} onChange={handleChange} className={`${portfolioFieldClass} h-28 resize-none`} />
         </div>
       );
     }
@@ -401,7 +412,7 @@ const Portfolio: React.FC = () => {
             value={safeText(formData.skills)}
             onChange={handleChange}
             placeholder="Comma-separated skills"
-            className="w-full h-32 rounded-xl px-3 py-2 resize-none"
+            className={`${portfolioFieldClass} h-32 resize-none`}
           />
         </div>
       );
@@ -416,7 +427,7 @@ const Portfolio: React.FC = () => {
             name="projects"
             value={safeText(formData.projects)}
             onChange={handleChange}
-            className="w-full h-36 rounded-xl px-3 py-2 resize-none"
+            className={`${portfolioFieldClass} h-36 resize-none`}
           />
         </div>
       );
@@ -427,14 +438,14 @@ const Portfolio: React.FC = () => {
         <div className="space-y-4">
           <h3 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Appearance</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <select name="theme" value={normalizeTheme(formData.theme)} onChange={handleChange} className="rounded-xl px-3 py-2">
+            <select name="theme" value={normalizeTheme(formData.theme)} onChange={handleChange} className={portfolioFieldClass}>
               <option value="midnight">Midnight</option>
               <option value="cobalt">Cobalt</option>
               <option value="slate">Slate</option>
             </select>
             <div />
-            <input name="ctaPrimaryText" value={safeText(formData.ctaPrimaryText)} onChange={handleChange} placeholder="Primary CTA text" className="rounded-xl px-3 py-2" />
-            <input name="ctaSecondaryText" value={safeText(formData.ctaSecondaryText)} onChange={handleChange} placeholder="Secondary CTA text" className="rounded-xl px-3 py-2" />
+            <input name="ctaPrimaryText" value={safeText(formData.ctaPrimaryText)} onChange={handleChange} placeholder="Primary CTA text" className={portfolioFieldClass} />
+            <input name="ctaSecondaryText" value={safeText(formData.ctaSecondaryText)} onChange={handleChange} placeholder="Secondary CTA text" className={portfolioFieldClass} />
           </div>
         </div>
       );
@@ -444,11 +455,11 @@ const Portfolio: React.FC = () => {
       <div className="space-y-4">
         <h3 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Export</h3>
         <div className="flex flex-wrap gap-3">
-          <button type="button" onClick={() => void refreshPreview()} className="rounded-xl px-4 py-2 text-white flex items-center gap-2 tucf-btn-primary">
+          <button type="button" onClick={() => void refreshPreview()} className="flex items-center gap-2 rounded-xl px-4 py-2 tucf-btn-primary">
             <Eye className="h-4 w-4" />
             Refresh Preview
           </button>
-          <button type="button" onClick={handleDownload} disabled={!generatedHtml} className="rounded-xl px-4 py-2 text-white disabled:opacity-50 flex items-center gap-2 tucf-btn-primary">
+          <button type="button" onClick={handleDownload} disabled={!generatedHtml} className="flex items-center gap-2 rounded-xl px-4 py-2 tucf-btn-primary disabled:opacity-50">
             <Download className="h-4 w-4" />
             Download HTML
           </button>
@@ -478,9 +489,7 @@ const Portfolio: React.FC = () => {
                   key={section.id}
                   type="button"
                   onClick={() => setActiveSection(section.id)}
-                  className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition ${
-                    active ? 'text-white' : ''
-                  }`}
+                    className="w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition"
                   style={active ? { background: 'rgba(255,122,0,0.15)', color: 'var(--accent)' } : { color: 'var(--text-secondary)' }}
                 >
                   <Icon className="h-4 w-4" />
@@ -505,7 +514,7 @@ const Portfolio: React.FC = () => {
       </div>
 
       <div className="mt-3 flex items-center gap-3 px-5">
-        <button type="button" onClick={handleDownload} disabled={!generatedHtml} className="rounded-xl px-4 py-2 text-white disabled:opacity-50 flex items-center gap-2 tucf-btn-primary">
+        <button type="button" onClick={handleDownload} disabled={!generatedHtml} className="flex items-center gap-2 rounded-xl px-4 py-2 tucf-btn-primary disabled:opacity-50">
           <Download className="h-4 w-4" />
           Download
         </button>

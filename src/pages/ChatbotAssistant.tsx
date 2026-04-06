@@ -1,6 +1,7 @@
 ﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Bot, Paperclip, Plus, Send, X } from 'lucide-react';
 import { getGroqApiKey } from '../lib/groq';
+import { safeParseJSON } from '../lib/safeJson';
 import './ChatbotAssistant.css';
 
 declare global {
@@ -288,7 +289,13 @@ async function chatbot_streamGroq(
         }
 
         try {
-          const parsed = JSON.parse(data);
+          const parsed = safeParseJSON<{ choices?: Array<{ delta?: { content?: string } }> }>(
+            data,
+            'chatbot.sse',
+          );
+          if (!parsed) {
+            continue;
+          }
           const token = parsed.choices?.[0]?.delta?.content || '';
           if (token) {
             fullText += token;

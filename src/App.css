@@ -9,9 +9,38 @@
   min-height: 100vh;
   background: var(--bg-main);
   color: var(--text-primary);
+}
+
+.loading-shell {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.auth-shell {
+  background:
+    radial-gradient(circle at top left, rgba(255, 181, 96, 0.22), transparent 26%),
+    linear-gradient(180deg, #fbf1e4 0%, #f6eadb 100%);
+  color: var(--text-primary);
+}
+
+.auth-shell .tucf-card {
+  background: rgba(255, 252, 247, 0.92);
+  border: 1px solid rgba(133, 95, 48, 0.12);
+  box-shadow: 0 24px 48px rgba(80, 54, 23, 0.1);
+}
+
+.auth-shell input,
+.auth-shell textarea,
+.auth-shell select {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(133, 95, 48, 0.16);
+  color: #2f2c2a;
+}
+
+.auth-shell input::placeholder,
+.auth-shell textarea::placeholder {
+  color: #8a7562;
 }
 
 .app-layout {
