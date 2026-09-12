@@ -1,0 +1,55 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-tucf}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-this-password}
+      POSTGRES_DB: ${POSTGRES_DB:-tucf}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tucf} -d ${POSTGRES_DB:-tucf}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./TUCF-Backend-main
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-tucf}:${POSTGRES_PASSWORD:-change-this-password}@db:5432/${POSTGRES_DB:-tucf}?schema=public
+      JWT_SECRET: ${JWT_SECRET:-change-this-jwt-secret}
+      ADZUNA_APP_ID: ${ADZUNA_APP_ID:-}
+      ADZUNA_API_KEY: ${ADZUNA_API_KEY:-}
+      PORT: 3000
+      FRONTEND_ORIGIN: http://localhost:5173
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+
+  utility:
+    build:
+      context: ./Tucf-Frontend-main
+      dockerfile: Dockerfile.utility
+    environment:
+      PORT: 5000
+    ports:
+      - "5000:5000"
+
+  frontend:
+    build:
+      context: ./Tucf-Frontend-main
+      args:
+        VITE_API_BASE_URL: http://localhost:3000
+    depends_on:
+      - backend
+      - utility
+    ports:
+      - "5173:80"
+
+volumes:
+  postgres_data:

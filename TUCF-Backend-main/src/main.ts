@@ -8,7 +8,7 @@ async function bootstrap() {
 
   app.enableCors({
     // Allow local React frontend origin for browser requests + preflight checks.
-    origin: ['http://localhost:5173'],
+    origin: (process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173').split(','),
     credentials: true,
     // Include OPTIONS so browser CORS preflight requests are accepted.
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

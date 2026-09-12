@@ -128,6 +128,99 @@ npm run server
 
 That server listens on port `5000`. `npm run dev:full` starts the Vite client and utility server together, but the Nest API still needs to be started separately.
 
+## 🐳 Docker Setup: Frontend, Backend, and Database
+
+Docker Compose runs four services because the frontend repository contains both a React/Vite application and a separate Express utility server:
+
+```text
+Browser -> frontend (Nginx :5173)
+             |------> backend (NestJS :3000) -> db (PostgreSQL :5432)
+             |------> utility (Express :5000)
+```
+
+### 1. Install Docker
+
+Install Docker Desktop and make sure it is running. From the repository root, confirm it works:
+
+```bash
+docker --version
+docker compose version
+```
+
+The repository root is the folder containing `TUCF-Backend-main` and `Tucf-Frontend-main`.
+
+### 2. Create the Docker environment file
+
+Create `TUCF/.env` next to `docker-compose.yml`:
+
+```env
+POSTGRES_USER=tucf
+POSTGRES_PASSWORD=change-this-password
+POSTGRES_DB=tucf
+JWT_SECRET=replace-with-a-long-random-secret
+ADZUNA_APP_ID=replace-with-adzuna-app-id
+ADZUNA_API_KEY=replace-with-adzuna-api-key
+```
+
+Do not commit this file. The frontend API URL is set to `http://localhost:3000`, because the URL is used by the user's browser, not by a container.
+
+### 3. Build and start all services
+
+From `TUCF/`:
+
+```bash
+docker compose up --build -d
+```
+
+Compose starts PostgreSQL first, waits for its health check, applies Prisma migrations, and then starts the NestJS API. The frontend is available at `http://localhost:5173`.
+
+### 4. Verify the containers
+
+```bash
+docker compose ps
+docker compose logs -f backend
+```
+
+Useful URLs:
+
+- React application: `http://localhost:5173`
+- NestJS Swagger: `http://localhost:3000/api`
+- Express utility health check: `http://localhost:5000/api/health`
+- PostgreSQL: `localhost:5432` (normally used only by the backend)
+
+### 5. Stop, restart, and reset the database
+
+```bash
+# Stop containers but keep the database volume
+docker compose down
+
+# Start existing images again
+docker compose up -d
+
+# Delete containers and all local PostgreSQL data
+docker compose down -v
+```
+
+The last command is destructive: it removes the `postgres_data` volume. Run `docker compose up --build -d` again after a reset.
+
+### 6. Rebuild one service after a code change
+
+```bash
+docker compose up --build -d backend
+docker compose up --build -d utility
+docker compose up --build -d frontend
+```
+
+The backend migration command runs automatically on startup. To inspect a failed service, use `docker compose logs backend`, `docker compose logs utility`, or `docker compose logs frontend`.
+
+### Docker files
+
+- `docker-compose.yml` defines PostgreSQL, NestJS, the Express utility server, and Nginx.
+- `TUCF-Backend-main/Dockerfile` builds the NestJS API and runs `prisma migrate deploy`.
+- `Tucf-Frontend-main/Dockerfile` builds React and serves the production bundle with Nginx.
+- `Tucf-Frontend-main/Dockerfile.utility` runs the Express utility server.
+- `Tucf-Frontend-main/nginx.conf` serves the SPA and proxies utility routes to Express.
+
 ## 🔌 API Endpoints
 
 ### NestJS API (`:3000`)
