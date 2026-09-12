@@ -1037,12 +1037,13 @@ html:not(.dark) .landing-pricing-features li.muted {
   color: #958b96;
 }
 
-@media (max-width: 1240px) {
+@media (max-width: 1500px) {
   .landing-topbar {
     flex-wrap: wrap;
   }
 
   .landing-nav {
+    flex: 0 0 100%;
     order: 3;
     width: 100%;
     justify-content: flex-start;
