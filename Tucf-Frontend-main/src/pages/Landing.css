@@ -216,7 +216,15 @@
 .landing-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 0.85rem;
+  min-width: 0;
+  row-gap: 0.65rem;
+}
+
+.landing-actions > * {
+  flex: 0 0 auto;
 }
 
 .landing-link-button {
@@ -1090,7 +1098,6 @@ html:not(.dark) .landing-pricing-features li.muted {
 
   .landing-actions {
     width: 100%;
-    flex-wrap: wrap;
     justify-content: flex-start;
   }
 

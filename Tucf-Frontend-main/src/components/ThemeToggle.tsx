@@ -46,7 +46,7 @@ const ThemeToggle: React.FC = () => {
       onClick={toggleTheme}
       aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
       aria-pressed={isDark}
-      className={`group relative inline-flex h-12 w-[94px] items-center rounded-full border p-1.5 shadow-[0_10px_28px_rgba(15,23,42,0.12)] transition-all duration-300 active:scale-[0.97] ${
+      className={`group relative inline-flex h-12 w-[94px] shrink-0 items-center rounded-full border p-1.5 shadow-[0_10px_28px_rgba(15,23,42,0.12)] transition-all duration-300 active:scale-[0.97] ${
         isDark
           ? 'border-white/10 bg-[#1c1c22] hover:-translate-y-0.5 hover:border-white/20 hover:shadow-[0_14px_34px_rgba(255,122,0,0.18)]'
           : 'border-slate-300 bg-[#f4f4f5] hover:-translate-y-0.5 hover:border-slate-400 hover:shadow-[0_14px_34px_rgba(148,163,184,0.22)]'
