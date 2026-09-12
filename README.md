@@ -4,7 +4,7 @@ TUCF is a career companion for discovering jobs, tracking applications, improvin
 
 ## 🎥 Demo
 
-[▶ Watch Demo Video](https://drive.google.com/file/d/1qA0XpP-A_IMbHKuJ-2B9Y0W0rLaOTPDV/view?usp=sharing)
+[▶ Watch Demo Video](https://drive.google.com/file/d/1fv1gZMGiNmYkLuXMNXcHIIcBbuSvHf7n/view?usp=sharing)
 
 [🌐 Live Demo](To Be Added in future scope)
 
