@@ -4,9 +4,9 @@ TUCF is a career companion for discovering jobs, tracking applications, improvin
 
 ## 🎥 Demo
 
-[▶ Watch Demo Video](https://chatgpt.com/c/YOUR_DEMO_VIDEO_LINK)
+[▶ Watch Demo Video](https://drive.google.com/file/d/1qA0XpP-A_IMbHKuJ-2B9Y0W0rLaOTPDV/view?usp=sharing)
 
-[🌐 Live Demo](https://chatgpt.com/c/YOUR_LIVE_APP_URL)
+[🌐 Live Demo](To Be Added in future scope)
 
 The demo shows the main workflow and features. No public demo URL or UI screenshot is currently stored in the repository.
 
@@ -205,10 +205,10 @@ Planned options include:
 
 **Winster Mano**
 
-- LinkedIn: `YOUR_LINKEDIN_URL`
-- GitHub: `YOUR_GITHUB_URL`
-- Portfolio: `YOUR_PORTFOLIO_URL`
+- LinkedIn: `https://www.linkedin.com/in/winster28`
+- GitHub: `https://github.com/winster2004`
+- Portfolio: `https://winster-portfolio.vercel.app/`
 
 ## ⭐ Closing
 
-Explore the repository to see how TUCF combines a modern React client with a modular NestJS API and practical career tooling.
+Explore the repository to see how TUCF combines a modern React client with a modular  API and practical career tooling.
